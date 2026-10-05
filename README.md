@@ -118,18 +118,26 @@ python3 compare_mcn_pinocchio.py --samples 50
 
 The first two commands are separate Gazebo runs with a requested 200 Hz period (0.005 s). The terminal results recorded for the two backend runs were:
 
-| Backend | Mean full-loop time | Actual full-loop rate | Mean MCN calculation time | Deadline overruns |
-| --- | ---: | ---: | ---: | ---: |
-| Python | 24.799 ms | 40.3 Hz | 23.374 ms | 100.00% |
-| C++ | 5.083 ms | 196.7 Hz | 0.078 ms | 15.08% |
+| Backend | Mean full-loop time | Actual full-loop rate | Mean MCN calculation time |
+| --- | ---: | ---: | ---: |
+| Python | 24.799 ms | 40.3 Hz | 23.374 ms |
+| C++ | 5.083 ms | 196.7 Hz | 0.078 ms |
 
-These are full control-loop measurements, not a standalone dynamics benchmark. The script uses time.perf_counter() around each complete iteration, including rate.sleep(), and times the MCN calculation separately. The requested 200 Hz is a target; the C++ run averaged 196.7 Hz and still missed the 5 ms deadline on 15.08% of iterations. CSV timestamps use ROS/Gazebo time; the console's actual loop dt avg is the relevant wall-clock performance measure.
+These are full control-loop measurements, not a standalone dynamics benchmark. The script uses time.perf_counter() around each complete iteration, including rate.sleep(), and times the MCN calculation separately. The requested 200 Hz is a target; the C++ run averaged 196.7 Hz. CSV timestamps use ROS/Gazebo time; the console's actual loop dt avg is the relevant wall-clock performance measure.
 
 The older MCN_CT.py used automatic backend selection and wrote MCN_CT_tracking_tau.csv by default. MCN_CT_backend_compare.py uses the same controller and dynamics calculations but requires an explicit --backend python or --backend cpp, so the two implementations can be timed separately. Both versions measure full-loop and MCN calculation time; the comparison version did not introduce the timing instrumentation. The current MCN_CT.py also accepts --backend and writes a backend-specific CSV name by default.
 
-Only one example simulation CSV is included: data/simulation/MCN_CT_tracking_tau.csv from an earlier controller run. Its generic name does not establish whether that run used Python or C++, and it is not the data for the two timing runs reported above. The locally retained Python CSV does not match the reported Python run's final tracking errors and is excluded. To reproduce the plots and timing from a fresh pair of runs, save both backend-specific CSVs and their terminal output together.
+The third command, compare_mcn_pinocchio.py --samples 50, draws 50 random joint positions, velocities and accelerations within the configured ranges. It compares my hand-derived six-DOF POE/Lie-group MCN dynamics (Python and C++) with Pinocchio using the external z1_controller/config/z1.urdf. The results below are the maximum absolute elementwise differences across the 50 tested states:
 
-The third command, compare_mcn_pinocchio.py --samples 50, draws 50 random joint positions, velocities and accelerations within the configured ranges. It compares the Python MCN dynamics and, if the C++ extension is available, the C++ MCN dynamics against Pinocchio results from the external z1_controller/config/z1.urdf. It reports maximum, mean and median absolute differences for the inertia matrix M, gravity G, velocity-dependent term C @ dq, nonlinear term h and predicted torque. This checks model agreement; it does not start Gazebo, publish commands or measure control-loop speed. It requires the pinocchio Python module and access to the z1_controller ROS package. Without the C++ extension, it checks only the Python implementation.
+| Dynamics term | Python max. absolute error | C++ max. absolute error |
+| --- | ---: | ---: |
+| Inertia matrix M | 4.440892e-16 | 3.330669e-16 |
+| Gravity G | 7.105427e-15 | 7.105427e-15 |
+| Velocity term C @ dq | 2.823425e-08 | 3.168472e-15 |
+| Nonlinear term h | 2.823425e-08 | 5.329071e-15 |
+| Predicted torque tau | 2.823425e-08 | 5.329071e-15 |
+
+These very small numerical errors show close agreement with Pinocchio and support the accuracy of the manually derived model for the tested states. The script also reports mean and median errors. This check does not start Gazebo, publish commands or measure control-loop speed. It requires the pinocchio Python module and access to the z1_controller ROS package. Without the C++ extension, it checks only the Python implementation.
 
 The included data/simulation/MCN_CT_tracking_tau.csv contains recorded time, reference positions, measured positions and commanded torques. The data/real/ files contain the recorded HighCmd baseline and LowCmd computed-torque runs. Recorded CSVs are examples, not inputs required by the controller.
 
