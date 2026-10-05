@@ -6,6 +6,40 @@ This project implements a six-joint computed-torque controller for the Unitree Z
 
 The Gazebo version publishes torque commands to six effort controllers. The real-robot LowCmd script sends MCN computed torque through the Unitree arm interface. A separate HighCmd script provides a built-in controller baseline; it does not calculate MCN torque.
 
+## Highlights
+
+- Custom six-DOF MCN dynamics model using a product-of-exponentials (POE) / Lie-group formulation.
+- Pinocchio validation across 50 randomized joint states.
+- Computed-torque control for all six Unitree Z1 joints.
+- Measured full Gazebo control-loop rate: 40.3 Hz with Python versus 196.7 Hz (approximately 200 Hz) with the C++/pybind11 backend.
+- Torque-level control in Gazebo and on a physical Unitree Z1.
+
+## My Contributions
+
+I implemented the six-DOF dynamics model, the computed-torque controller, the Pinocchio validation, and the C++/pybind11 dynamics backend. I also integrated torque commands with Gazebo effort controllers and implemented the physical Z1 LowCmd torque-only controller. The Unitree SDK/URDF, ROS/Gazebo, and Pinocchio are external tools and dependencies.
+
+## Results and demo
+
+[![Watch the Gazebo and real-robot demo](https://i.ytimg.com/vi/CpSk3zhT2us/hqdefault.jpg)](https://youtu.be/CpSk3zhT2us)
+
+These exported poster figures show position tracking and computed-torque commands in Gazebo and on the real Z1. The position plots compare the computed-torque controller with the built-in controller. They are separate from the Python/C++ loop-timing experiment described below; the figures do not establish the 40.3 Hz and 196.7 Hz results.
+
+Gazebo simulation — position tracking:
+
+![Six-joint Gazebo position tracking: built-in controller versus computed torque](results/figures/sim_pos.png)
+
+Gazebo simulation — computed-torque commands:
+
+![Six-joint Gazebo computed-torque commands](results/figures/sim_torque.png)
+
+Real robot — position tracking:
+
+![Six-joint real-robot position tracking: built-in controller versus computed torque](results/figures/real_pos.png)
+
+Real robot — computed-torque commands:
+
+![Six-joint real-robot computed-torque commands](results/figures/real_torque.png)
+
 ## Repository contents
 
 | Path | Purpose |
@@ -20,7 +54,6 @@ The Gazebo version publishes torque commands to six effort controllers. The real
 | scripts/MCN_CT_highcmd_real.py | Real-arm HighCmd reference-tracking baseline |
 | data/simulation/, data/real/ | Selected recorded joint tracking and torque data |
 | results/figures/ | Four exported poster figures from the simulation and real-robot experiments |
-| media/Demo.mp4 | Demo video showing the simulation and real robot |
 
 The original Unitree SDK, URDF and compiled libraries are external dependencies and are not copied into this repository.
 
@@ -99,28 +132,6 @@ Only one example simulation CSV is included: data/simulation/MCN_CT_tracking_tau
 The third command, compare_mcn_pinocchio.py --samples 50, draws 50 random joint positions, velocities and accelerations within the configured ranges. It compares the Python MCN dynamics and, if the C++ extension is available, the C++ MCN dynamics against Pinocchio results from the external z1_controller/config/z1.urdf. It reports maximum, mean and median absolute differences for the inertia matrix M, gravity G, velocity-dependent term C @ dq, nonlinear term h and predicted torque. This checks model agreement; it does not start Gazebo, publish commands or measure control-loop speed. It requires the pinocchio Python module and access to the z1_controller ROS package. Without the C++ extension, it checks only the Python implementation.
 
 The included data/simulation/MCN_CT_tracking_tau.csv contains recorded time, reference positions, measured positions and commanded torques. The data/real/ files contain the recorded HighCmd baseline and LowCmd computed-torque runs. Recorded CSVs are examples, not inputs required by the controller.
-
-## Results and demo
-
-These exported poster figures show position tracking and computed-torque commands in Gazebo and on the real Z1. The position plots compare the computed-torque controller with the built-in controller. They are separate from the Python/C++ loop-timing experiment above; the figures do not establish the 40.3 Hz and 196.7 Hz results.
-
-Gazebo simulation — position tracking:
-
-![Six-joint Gazebo position tracking: built-in controller versus computed torque](results/figures/sim_pos.png)
-
-Gazebo simulation — computed-torque commands:
-
-![Six-joint Gazebo computed-torque commands](results/figures/sim_torque.png)
-
-Real robot — position tracking:
-
-![Six-joint real-robot position tracking: built-in controller versus computed torque](results/figures/real_pos.png)
-
-Real robot — computed-torque commands:
-
-![Six-joint real-robot computed-torque commands](results/figures/real_torque.png)
-
-[Watch the simulation and real-robot demo](media/Demo.mp4).
 
 ## Real-arm experiments
 
