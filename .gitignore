@@ -1,0 +1,13 @@
+archive_unclassified/
+**/__pycache__/
+*.py[cod]
+*.so
+*.o
+build/
+.vscode/
+scripts/*.csv
+*_logs/
+scripts/benchmark_mcn_timing.py
+data/simulation/MCN_CT_cpp_tracking_tau.csv
+data/simulation/MCN_CT_python_tracking_tau.csv
+robot_description/
